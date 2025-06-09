@@ -1,27 +1,39 @@
-async function getUserId(username) {
-  const res = await fetch(`https://users.roblox.com/v1/usernames/users`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ usernames: [username] })
-  });
-  const data = await res.json();
-  return data.data[0]?.id || null;
-}
-
 async function getAvatar() {
   const username = document.getElementById("username").value;
-  const userId = await getUserId(username);
-  if (!userId) {
-    document.getElementById("result").innerHTML = "User not found!";
+  const avatarImage = document.getElementById("avatarImage");
+
+  if (!username) {
+    alert("Please enter a Roblox username.");
     return;
   }
 
-  const res = await fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`);
-  const data = await res.json();
-  const imgUrl = data.data[0].imageUrl;
+  try {
+    // Step 1: Get user ID from username
+    const userResponse = await fetch(`https://users.roblox.com/v1/usernames/users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ usernames: [username] })
+    });
 
-  document.getElementById("result").innerHTML = `
-    <h3>${username}'s Avatar</h3>
-    <img src="${imgUrl}" alt="Avatar">
-  `;
+    const userData = await userResponse.json();
+
+    if (!userData.data || userData.data.length === 0) {
+      alert("Username not found!");
+      return;
+    }
+
+    const userId = userData.data[0].id;
+
+    // Step 2: Build avatar URL
+    const avatarUrl = `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`;
+
+    avatarImage.src = avatarUrl;
+    avatarImage.alt = `${username}'s Roblox Avatar`;
+  } catch (error) {
+    console.error("Error fetching avatar:", error);
+    alert("There was an error. Please try again later.");
+  }
 }
+
