@@ -1,36 +1,29 @@
 async function getAvatar() {
-  const username = document.getElementById("username").value.trim();
-  const avatarImage = document.getElementById("avatarImage");
+  const username = document.getElementById("username").value;
 
-  if (!username) {
-    alert("Please enter a Roblox username.");
+  // Get userId from username
+  const userIdResponse = await fetch(`https://users.roblox.com/v1/usernames/users`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ usernames: [username] })
+  });
+
+  const userIdData = await userIdResponse.json();
+
+  if (!userIdData || !userIdData.data || userIdData.data.length === 0) {
+    alert("User not found.");
     return;
   }
 
-  try {
-    // Step 1: Get the user ID from the username
-    const userResponse = await fetch("https://users.roblox.com/v1/usernames/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ usernames: [username] })
-    });
+  const userId = userIdData.data[0].id;
 
-    const userData = await userResponse.json();
+  // Get avatar thumbnail
+  const avatarUrl = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`;
+  const avatarResponse = await fetch(avatarUrl);
+  const avatarData = await avatarResponse.json();
 
-    if (!userData.data || userData.data.length === 0) {
-      alert("Username not found!");
-      return;
-    }
-
-    const userId = userData.data[0].id;
-
-    // Step 2: Set the avatar image using the user ID
-    const avatarUrl = `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`;
-
-    avatarImage.src = avatarUrl;
-    avatarImage.alt = `${username}'s Roblox Avatar`;
-  } catch (error) {
-    console.error("Error fetching avatar:", error);
-    alert("Something went wrong. Try again.");
-  }
+  const imageUrl = avatarData.data[0].imageUrl;
+  document.getElementById("avatarImage").src = imageUrl;
 }
